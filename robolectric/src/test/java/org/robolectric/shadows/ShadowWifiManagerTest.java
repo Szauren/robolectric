@@ -2,8 +2,16 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
+import static android.os.Build.VERSION_CODES.Q;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.content.Context;
@@ -15,6 +23,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
+import android.net.wifi.WifiUsabilityStatsEntry;
 import android.os.Build;
 import android.util.Pair;
 import androidx.test.core.app.ApplicationProvider;
@@ -24,6 +33,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.robolectric.annotation.Config;
 
 @RunWith(AndroidJUnit4.class)
@@ -519,5 +529,216 @@ public class ShadowWifiManagerTest {
     assertThat(wifiManager.is5GHzBandSupported()).isFalse();
     shadowOf(wifiManager).setIs5GHzBandSupported(true);
     assertThat(wifiManager.is5GHzBandSupported()).isTrue();
+  }
+
+  @Test
+  @Config(minSdk = Q)
+  public void testAddOnWifiUsabilityStatsListener() {
+    // GIVEN
+    WifiManager.OnWifiUsabilityStatsListener mockListener =
+        mock(WifiManager.OnWifiUsabilityStatsListener.class);
+    wifiManager.addOnWifiUsabilityStatsListener(directExecutor(), mockListener);
+
+    // WHEN
+    shadowOf(wifiManager)
+        .postUsabilityStats(
+            /* seqNum= */ 10,
+            /* isSameBssidAndFreq= */ false,
+            /* timeStampMillis= */ 1234567L,
+            /* rssi= */ 23,
+            /* linkSpeedMbps= */ 998,
+            /* totalTxSuccess= */ 0,
+            /* totalTxRetries= */ 0,
+            /* totalTxBad= */ 0,
+            /* totalRxSuccess= */ 0,
+            /* totalRadioOnTimeMillis= */ 0,
+            /* totalRadioTxTimeMillis= */ 0,
+            /* totalRadioRxTimeMillis= */ 0,
+            /* totalScanTimeMillis= */ 0,
+            /* totalNanScanTimeMillis= */ 0,
+            /* totalBackgroundScanTimeMillis= */ 0,
+            /* totalRoamScanTimeMillis= */ 0,
+            /* totalPnoScanTimeMillis= */ 0,
+            /* totalHotspot2ScanTimeMillis= */ 0,
+            /* totalCcaBusyFreqTimeMillis= */ 0,
+            /* totalRadioOnFreqTimeMillis= */ 0,
+            /* totalBeaconRx= */ 0,
+            /* probeStatusSinceLastUpdate= */ 0,
+            /* probeElapsedTimeSinceLastUpdateMillis= */ 0,
+            /* probeMcsRateSinceLastUpdate= */ 0,
+            /* rxLinkSpeedMbps= */ 0,
+            /* cellularDataNetworkType= */ 0,
+            /* cellularSignalStrengthDbm= */ 0,
+            /* cellularSignalStrengthDb= */ 0,
+            /* isSameRegisteredCell= */ false);
+
+    // THEN
+    verify(mockListener)
+        .onWifiUsabilityStats(
+            eq(10),
+            eq(false),
+            argThat(
+                new WifiUsabilityStatsEntryMatcher(
+                    new WifiUsabilityStatsEntry(
+                        /* timeStampMillis= */ 1234567L,
+                        /* rssi= */ 23,
+                        /* linkSpeedMbps= */ 998,
+                        /* totalTxSuccess= */ 0,
+                        /* totalTxRetries= */ 0,
+                        /* totalTxBad= */ 0,
+                        /* totalRxSuccess= */ 0,
+                        /* totalRadioOnTimeMillis= */ 0,
+                        /* totalRadioTxTimeMillis= */ 0,
+                        /* totalRadioRxTimeMillis= */ 0,
+                        /* totalScanTimeMillis= */ 0,
+                        /* totalNanScanTimeMillis= */ 0,
+                        /* totalBackgroundScanTimeMillis= */ 0,
+                        /* totalRoamScanTimeMillis= */ 0,
+                        /* totalPnoScanTimeMillis= */ 0,
+                        /* totalHotspot2ScanTimeMillis= */ 0,
+                        /* totalCcaBusyFreqTimeMillis= */ 0,
+                        /* totalRadioOnFreqTimeMillis= */ 0,
+                        /* totalBeaconRx= */ 0,
+                        /* probeStatusSinceLastUpdate= */ 0,
+                        /* probeElapsedTimeSinceLastUpdateMillis= */ 0,
+                        /* probeMcsRateSinceLastUpdate= */ 0,
+                        /* rxLinkSpeedMbps= */ 0,
+                        /* cellularDataNetworkType= */ 0,
+                        /* cellularSignalStrengthDbm= */ 0,
+                        /* cellularSignalStrengthDb= */ 0,
+                        /* isSameRegisteredCell= */ false))));
+    verifyNoMoreInteractions(mockListener);
+  }
+
+  @Test
+  @Config(minSdk = Q)
+  public void testRemoveOnWifiUsabilityStatsListener() {
+    // GIVEN
+    WifiManager.OnWifiUsabilityStatsListener mockListener =
+        mock(WifiManager.OnWifiUsabilityStatsListener.class);
+    wifiManager.addOnWifiUsabilityStatsListener(directExecutor(), mockListener);
+
+    // WHEN
+    wifiManager.removeOnWifiUsabilityStatsListener(mockListener);
+    shadowOf(wifiManager)
+        .postUsabilityStats(
+            /* seqNum= */ 10,
+            /* isSameBssidAndFreq= */ true,
+            /* timeStampMillis= */ 1234567L,
+            /* rssi= */ 23,
+            /* linkSpeedMbps= */ 998,
+            /* totalTxSuccess= */ 0,
+            /* totalTxRetries= */ 0,
+            /* totalTxBad= */ 0,
+            /* totalRxSuccess= */ 0,
+            /* totalRadioOnTimeMillis= */ 0,
+            /* totalRadioTxTimeMillis= */ 0,
+            /* totalRadioRxTimeMillis= */ 0,
+            /* totalScanTimeMillis= */ 0,
+            /* totalNanScanTimeMillis= */ 0,
+            /* totalBackgroundScanTimeMillis= */ 0,
+            /* totalRoamScanTimeMillis= */ 0,
+            /* totalPnoScanTimeMillis= */ 0,
+            /* totalHotspot2ScanTimeMillis= */ 0,
+            /* totalCcaBusyFreqTimeMillis= */ 0,
+            /* totalRadioOnFreqTimeMillis= */ 0,
+            /* totalBeaconRx= */ 0,
+            /* probeStatusSinceLastUpdate= */ 0,
+            /* probeElapsedTimeSinceLastUpdateMillis= */ 0,
+            /* probeMcsRateSinceLastUpdate= */ 0,
+            /* rxLinkSpeedMbps= */ 0,
+            /* cellularDataNetworkType= */ 0,
+            /* cellularSignalStrengthDbm= */ 0,
+            /* cellularSignalStrengthDb= */ 0,
+            /* isSameRegisteredCell= */ false);
+
+    // THEN
+    verifyZeroInteractions(mockListener);
+  }
+
+  @Test
+  @Config(minSdk = Q)
+  public void testGetUsabilityScores() {
+    // GIVEN
+    wifiManager.updateWifiUsabilityScore(
+        /* seqNum= */ 23, /* score= */ 50, /* predictionHorizonSec= */ 16);
+    wifiManager.updateWifiUsabilityScore(
+        /* seqNum= */ 24, /* score= */ 40, /* predictionHorizonSec= */ 16);
+
+    // WHEN
+    List<ShadowWifiManager.WifiUsabilityScore> scores = shadowOf(wifiManager).getUsabilityScores();
+
+    // THEN
+    assertThat(scores).hasSize(2);
+    assertThat(scores.get(0).seqNum).isEqualTo(23);
+    assertThat(scores.get(0).score).isEqualTo(50);
+    assertThat(scores.get(0).predictionHorizonSec).isEqualTo(16);
+    assertThat(scores.get(1).seqNum).isEqualTo(24);
+    assertThat(scores.get(1).score).isEqualTo(40);
+    assertThat(scores.get(1).predictionHorizonSec).isEqualTo(16);
+  }
+
+  @Test
+  @Config(minSdk = Q)
+  public void testClearUsabilityScores() {
+    // GIVEN
+    wifiManager.updateWifiUsabilityScore(
+        /* seqNum= */ 23, /* score= */ 50, /* predictionHorizonSec= */ 16);
+    wifiManager.updateWifiUsabilityScore(
+        /* seqNum= */ 24, /* score= */ 40, /* predictionHorizonSec= */ 16);
+
+    // WHEN
+    shadowOf(wifiManager).clearUsabilityScores();
+    List<ShadowWifiManager.WifiUsabilityScore> scores = shadowOf(wifiManager).getUsabilityScores();
+
+    // THEN
+    assertThat(scores).isEmpty();
+  }
+
+  private static class WifiUsabilityStatsEntryMatcher
+      implements ArgumentMatcher<WifiUsabilityStatsEntry> {
+
+    private final WifiUsabilityStatsEntry entry;
+
+    public WifiUsabilityStatsEntryMatcher(WifiUsabilityStatsEntry entry) {
+      this.entry = entry;
+    }
+
+    @Override
+    public boolean matches(Object argument) {
+      if (!(argument instanceof WifiUsabilityStatsEntry)) {
+        return false;
+      }
+
+      WifiUsabilityStatsEntry other = (WifiUsabilityStatsEntry) argument;
+      return entry.getTimeStampMillis() == other.getTimeStampMillis()
+          && entry.getRssi() == other.getRssi()
+          && entry.getLinkSpeedMbps() == other.getLinkSpeedMbps()
+          && entry.getTotalTxSuccess() == other.getTotalTxSuccess()
+          && entry.getTotalTxRetries() == other.getTotalTxRetries()
+          && entry.getTotalTxBad() == other.getTotalTxBad()
+          && entry.getTotalRxSuccess() == other.getTotalRxSuccess()
+          && entry.getTotalRadioOnTimeMillis() == other.getTotalRadioOnTimeMillis()
+          && entry.getTotalRadioTxTimeMillis() == other.getTotalRadioTxTimeMillis()
+          && entry.getTotalRadioRxTimeMillis() == other.getTotalRadioRxTimeMillis()
+          && entry.getTotalScanTimeMillis() == other.getTotalScanTimeMillis()
+          && entry.getTotalNanScanTimeMillis() == other.getTotalNanScanTimeMillis()
+          && entry.getTotalBackgroundScanTimeMillis() == other.getTotalBackgroundScanTimeMillis()
+          && entry.getTotalRoamScanTimeMillis() == other.getTotalRoamScanTimeMillis()
+          && entry.getTotalPnoScanTimeMillis() == other.getTotalPnoScanTimeMillis()
+          && entry.getTotalHotspot2ScanTimeMillis() == other.getTotalHotspot2ScanTimeMillis()
+          && entry.getTotalCcaBusyFreqTimeMillis() == other.getTotalCcaBusyFreqTimeMillis()
+          && entry.getTotalRadioOnFreqTimeMillis() == other.getTotalRadioOnFreqTimeMillis()
+          && entry.getTotalBeaconRx() == other.getTotalBeaconRx()
+          && entry.getProbeStatusSinceLastUpdate() == other.getProbeStatusSinceLastUpdate()
+          && entry.getProbeElapsedTimeSinceLastUpdateMillis()
+              == other.getProbeElapsedTimeSinceLastUpdateMillis()
+          && entry.getProbeMcsRateSinceLastUpdate() == other.getProbeMcsRateSinceLastUpdate()
+          && entry.getRxLinkSpeedMbps() == other.getRxLinkSpeedMbps()
+          && entry.getCellularDataNetworkType() == other.getCellularDataNetworkType()
+          && entry.getCellularSignalStrengthDbm() == other.getCellularSignalStrengthDbm()
+          && entry.getCellularSignalStrengthDb() == other.getCellularSignalStrengthDb()
+          && entry.isSameRegisteredCell() == other.isSameRegisteredCell();
+    }
   }
 }
